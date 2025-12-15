@@ -1,0 +1,7 @@
+{
+  "name": "Tim's Pool Store Finder",
+  "description": "Locate top-rated pool stores and services near you with advanced filtering and real-time mapping.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
