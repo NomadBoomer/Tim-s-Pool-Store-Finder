@@ -164,7 +164,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
               <input
                 list="town-suggestions"
                 type="text"
-                placeholder={location.state ? "Select or Type City" : "Select State First"}
+                placeholder={location.state ? "Type or Select City" : "Select State First"}
                 className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-base1 outline-none ${!location.state ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 value={location.city}
                 onChange={(e) => onLocationChange({ ...location, city: e.target.value })}

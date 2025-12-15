@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { StoreResult, LocationState } from '../types';
+import { StoreResult, LocationState, OpenTimeFilter } from '../types';
 
 const getGeminiClient = () => {
   if (!process.env.API_KEY) {
@@ -11,7 +11,8 @@ const getGeminiClient = () => {
 export const searchPoolStores = async (
   location: LocationState,
   range: string,
-  services: string[]
+  services: string[],
+  openTimeFilter: OpenTimeFilter
 ): Promise<StoreResult[]> => {
   const ai = getGeminiClient();
 
@@ -30,9 +31,18 @@ export const searchPoolStores = async (
     ? services.join(", ") 
     : "General Pool Services";
 
+  let timeInstruction = "";
+  if (openTimeFilter === 'now') {
+    const currentDateTime = new Date().toLocaleString('en-US', { timeZoneName: 'short' });
+    timeInstruction = `Strictly filter for stores that are OPEN RIGHT NOW. The current date and time is ${currentDateTime}. Check their operating hours.`;
+  } else if (openTimeFilter === 'weekend') {
+    timeInstruction = "Strictly filter for stores that are open on weekends (Saturday or Sunday).";
+  }
+
   const prompt = `
-    Find top 5 pool stores or service providers near ${locationString} within ${range} miles.
+    Find top 6 pool stores or service providers near ${locationString} within ${range} miles.
     Focus on finding businesses that offer these services: ${serviceString}.
+    ${timeInstruction}
     
     You MUST use the Google Maps tool to retrieve accurate details.
 

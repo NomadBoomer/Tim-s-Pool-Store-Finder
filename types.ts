@@ -1,4 +1,5 @@
 export type SearchMode = 'device' | 'zip' | 'town';
+export type OpenTimeFilter = 'all' | 'now' | 'weekend';
 
 export interface LocationState {
   mode: SearchMode;

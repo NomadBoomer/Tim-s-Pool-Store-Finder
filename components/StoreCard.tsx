@@ -10,24 +10,23 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
   const isRatingAvailable = store.rating !== "Not Available" && store.rating !== undefined;
   const isPhoneAvailable = store.phone && store.phone !== "Not Available";
   
-  // Logic to determine if this is a "Top Rated" store
-  const isTopRated = isRatingAvailable && typeof store.rating === 'number' && store.rating >= 4.5;
-  // Simple heuristic for "Best Match" - simply the first one usually in the list, but we can style it if passed an index. 
-  // For now, let's use the High Rating as the main differentiator.
+  // Logic to determine if this is a "Top Rated" store (4.8 stars or higher)
+  const isTopRated = isRatingAvailable && typeof store.rating === 'number' && store.rating >= 4.8;
 
   return (
     <div className={`
       bg-white rounded-xl shadow-lg transition-all duration-300 border overflow-hidden flex flex-col h-full group relative
-      ${isTopRated ? 'border-yellow-400 shadow-xl' : 'border-brand-base2 hover:shadow-2xl'}
+      ${isTopRated ? 'border-yellow-400 shadow-xl ring-1 ring-yellow-100' : 'border-brand-base2 hover:shadow-2xl'}
     `}>
+      {/* Visual Indicator for Top Rated Stores */}
       {isTopRated && (
-        <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg z-10 flex items-center shadow-sm">
-          <Trophy size={12} className="mr-1" /> Top Rated
+        <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-950 text-xs font-bold px-3 py-1.5 rounded-bl-lg z-10 flex items-center shadow-sm border-b border-l border-white/20">
+          <Trophy size={13} className="mr-1.5" /> Top Rated
         </div>
       )}
 
       <div className="p-6 flex-grow">
-        <div className="flex justify-between items-start mb-2 pr-16"> {/* pr-16 for badge space */}
+        <div className="flex justify-between items-start mb-2 pr-16"> {/* pr-16 ensures text doesn't overlap with badge */}
           <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-accent1 transition-colors leading-tight">
             {store.name}
           </h3>

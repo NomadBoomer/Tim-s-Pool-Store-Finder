@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { LocationState, StoreResult } from './types';
+import { LocationState, StoreResult, OpenTimeFilter as OpenTimeFilterType } from './types';
 import LocationSelector from './components/LocationSelector';
 import FilterBar from './components/FilterBar';
+import OpenTimeFilter from './components/OpenTimeFilter';
 import StoreCard from './components/StoreCard';
 import { searchPoolStores } from './services/geminiService';
 import { Search, Map as MapIcon, Loader2, AlertCircle } from 'lucide-react';
@@ -16,6 +17,7 @@ const App: React.FC = () => {
   
   const [range, setRange] = useState<string>('5');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [openTime, setOpenTime] = useState<OpenTimeFilterType>('all');
   const [results, setResults] = useState<StoreResult[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,10 +58,10 @@ const App: React.FC = () => {
     setResults(null);
 
     try {
-      const stores = await searchPoolStores(location, range, selectedFilters);
+      const stores = await searchPoolStores(location, range, selectedFilters, openTime);
       setResults(stores);
       if (stores.length === 0) {
-        setError(`No pool stores found within ${range} miles. Try increasing the range.`);
+        setError(`No pool stores found within ${range} miles matching your criteria. Try adjusting the filters.`);
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -96,6 +98,13 @@ const App: React.FC = () => {
                   onLocationChange={setLocation} 
                   selectedRange={range}
                   onRangeChange={setRange}
+                />
+                
+                <div className="my-6 border-t border-gray-100"></div>
+
+                <OpenTimeFilter 
+                  value={openTime}
+                  onChange={setOpenTime}
                 />
                 
                 <div className="my-6 border-t border-gray-100"></div>
@@ -177,7 +186,7 @@ const App: React.FC = () => {
                   ></iframe>
                   <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg text-xs shadow-md max-w-xs">
                     <p className="font-bold text-brand-contrast4">Map Tips:</p>
-                    <p>Explore the area around the top rated result. Click "View on Map" on individual cards for specific directions.</p>
+                    <p>Explore the area around the top rated result. Click "Get Directions" on individual cards for specific directions.</p>
                   </div>
                </div>
              </div>
