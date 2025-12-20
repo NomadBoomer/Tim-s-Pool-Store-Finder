@@ -5,6 +5,7 @@ import FilterBar from './components/FilterBar';
 import OpenTimeFilter from './components/OpenTimeFilter';
 import StoreCard from './components/StoreCard';
 import { searchPoolStores } from './services/geminiService';
+import { SPONSORED_LISTINGS } from './constants';
 import { Search, Map as MapIcon, Loader2, AlertCircle } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -50,6 +51,25 @@ const App: React.FC = () => {
     return true;
   };
 
+  const getRelevantSponsoredListings = (currentLoc: LocationState): StoreResult[] => {
+    return SPONSORED_LISTINGS.filter(sponsor => {
+      // 1. If no targetStates, it is a National sponsor (Show everywhere)
+      if (!sponsor.targetStates || sponsor.targetStates.length === 0) {
+        return true;
+      }
+
+      // 2. If user selected 'Town' mode, check if state matches
+      if (currentLoc.mode === 'town' && currentLoc.state) {
+        return sponsor.targetStates.includes(currentLoc.state);
+      }
+      
+      // 3. For 'Device' or 'Zip' mode, we can't easily strict match state without a reverse geo-code API.
+      // For this MVP, we will show State-Specific sponsors ONLY if we are in Town mode,
+      // and show National sponsors for all modes.
+      return false;
+    });
+  };
+
   const handleSearch = async () => {
     setError(null);
     if (!validateSearch()) return;
@@ -59,9 +79,27 @@ const App: React.FC = () => {
 
     try {
       const stores = await searchPoolStores(location, range, selectedFilters, openTime);
-      setResults(stores);
-      if (stores.length === 0) {
-        setError(`No pool stores found within ${range} miles matching your criteria. Try adjusting the filters.`);
+      
+      // 1. Get Sponsored Listings relevant to this search
+      const relevantSponsors = getRelevantSponsoredListings(location);
+
+      // 2. Deduplication Logic
+      // Filter out AI results that have the same name or phone as a sponsored result
+      const uniqueOrganicStores = stores.filter(organicStore => {
+        const isDuplicate = relevantSponsors.some(sponsor => 
+          sponsor.name.toLowerCase() === organicStore.name.toLowerCase() ||
+          (sponsor.phone && organicStore.phone && sponsor.phone.replace(/\D/g,'') === organicStore.phone.replace(/\D/g,''))
+        );
+        return !isDuplicate;
+      });
+      
+      // 3. Merge
+      const finalResults = [...relevantSponsors, ...uniqueOrganicStores];
+      
+      setResults(finalResults);
+      
+      if (finalResults.length === 0) {
+        setError(`No local pool stores found within ${range} miles matching your criteria.`);
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");

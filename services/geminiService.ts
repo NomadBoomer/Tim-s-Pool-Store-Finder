@@ -2,10 +2,11 @@ import { GoogleGenAI } from "@google/genai";
 import { StoreResult, LocationState, OpenTimeFilter } from '../types';
 
 const getGeminiClient = () => {
-  if (!process.env.API_KEY) {
-    throw new Error("API Key is missing");
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please ensure it is configured in the environment.");
   }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return new GoogleGenAI({ apiKey });
 };
 
 export const searchPoolStores = async (
@@ -17,14 +18,17 @@ export const searchPoolStores = async (
   const ai = getGeminiClient();
 
   let locationString = "";
+  let userLatLng = null;
+
   if (location.mode === 'device' && location.latitude && location.longitude) {
     locationString = `${location.latitude}, ${location.longitude}`;
+    userLatLng = { latitude: location.latitude, longitude: location.longitude };
   } else if (location.mode === 'zip') {
     locationString = `Zip Code ${location.zipCode}`;
   } else if (location.mode === 'town') {
     locationString = `${location.city}, ${location.state}`;
   } else {
-    throw new Error("Invalid location data");
+    throw new Error("Invalid location data provided.");
   }
 
   const serviceString = services.length > 0 
@@ -54,20 +58,30 @@ export const searchPoolStores = async (
     1. "rating": Provide a number between 0-5. If not found, use "Not Available".
     2. "reviewSummary": Write a short, inviting 1-sentence blurb (15-20 words) about the business. 
        - If you find reviews, summarize them. 
-       - If you CANNOT find specific reviews, generate a professional description based on their name and likely services (e.g. "Reliable local provider specializing in pool maintenance and equipment.").
-       - DO NOT return "Not Available" for the summary. It must be a full sentence.
+       - If you CANNOT find specific reviews, generate a professional description based on their name and likely services.
+       - DO NOT return "Not Available" for the summary.
 
     If no stores are found within the range, return an empty array.
-    Do not include markdown formatting like \`\`\`json.
   `;
 
   try {
+    const config: any = {
+      tools: [{ googleMaps: {} }],
+    };
+
+    // Include location context if using device GPS
+    if (userLatLng) {
+      config.toolConfig = {
+        retrievalConfig: {
+          latLng: userLatLng
+        }
+      };
+    }
+
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-flash-native-audio-preview-09-2025", // Using 2.5 series for Maps support
       contents: prompt,
-      config: {
-        tools: [{ googleMaps: {} }],
-      },
+      config,
     });
 
     let responseText = response.text || "[]";
@@ -77,7 +91,6 @@ export const searchPoolStores = async (
     if (jsonMatch) {
         responseText = jsonMatch[0];
     } else {
-        // Fallback cleanup if regex didn't match a block but text is messy
         responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     }
 
@@ -97,24 +110,25 @@ export const searchPoolStores = async (
       }
     } catch (e) {
       console.error("Failed to parse JSON response from Gemini", e);
-      console.log("Raw response text:", response.text);
     }
 
-    // Enhance with Grounding Metadata
+    // Enhance with Grounding Metadata from Google Maps
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
 
     if (groundingChunks && stores.length > 0) {
-      stores = stores.map((store, index) => {
-        // Attempt to find a relevant chunk
+      stores = stores.map((store) => {
+        // Attempt to find a relevant chunk in the Maps data
         const chunk = groundingChunks.find(c => 
-          c.web?.title?.toLowerCase().includes(store.name.toLowerCase()) ||
-          store.name.toLowerCase().includes(c.web?.title?.toLowerCase() || '')
+          c.maps?.title?.toLowerCase().includes(store.name.toLowerCase()) ||
+          store.name.toLowerCase().includes(c.maps?.title?.toLowerCase() || '')
         );
 
         let mapUri = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name + " " + store.address)}`;
         
-        // @ts-ignore 
-        if (chunk?.web?.uri) mapUri = chunk.web.uri;
+        // Use the official URI from the grounding chunk if available
+        if (chunk?.maps?.uri) {
+          mapUri = chunk.maps.uri;
+        }
         
         return {
           ...store,
@@ -127,6 +141,6 @@ export const searchPoolStores = async (
 
   } catch (error) {
     console.error("Gemini API Error:", error);
-    throw new Error("Failed to fetch pool stores. Please try again.");
+    throw new Error("Failed to fetch pool stores. Please try again or check your search parameters.");
   }
 };

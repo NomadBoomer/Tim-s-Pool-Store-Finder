@@ -1,4 +1,4 @@
-import { ServiceOption } from './types';
+import { ServiceOption, StoreResult } from './types';
 
 export const SERVICE_OPTIONS: ServiceOption[] = [
   { id: 'chemicals', label: 'Pool Chemicals', icon: '🧪', colorClass: 'bg-green-600 hover:bg-green-700 text-white' },
@@ -11,6 +11,35 @@ export const SERVICE_OPTIONS: ServiceOption[] = [
   { id: 'above-ground', label: 'Above Ground Pools', icon: '🏊', colorClass: 'bg-pink-600 hover:bg-pink-700 text-white' },
   { id: 'construction', label: 'Construction', icon: '🚧', colorClass: 'bg-gray-800 hover:bg-gray-900 text-white' },
   { id: 'spas', label: 'Hot Tubs & Spas', icon: '🛁', colorClass: 'bg-yellow-400 hover:bg-yellow-500 text-gray-900' },
+];
+
+export const SPONSORED_LISTINGS: StoreResult[] = [
+  {
+    id: 'sponsor-national',
+    name: "AquaTech Supplies Online",
+    address: "Nationwide Shipping",
+    phone: "(888) 555-0199",
+    rating: 5.0,
+    reviewSummary: "The #1 rated online bulk chemical supplier. Fast shipping to all 50 states.",
+    isSponsored: true,
+    website: "https://example.com/aquatech",
+    specialOffer: "Free water testing kit with any purchase over $50.",
+    mapUri: "https://google.com",
+    targetStates: [] // Empty array = National Sponsor (shows everywhere)
+  },
+  {
+    id: 'sponsor-local-ca',
+    name: "California Pool Pros",
+    address: "Serving Southern California",
+    phone: "(800) 555-0200",
+    rating: 4.9,
+    reviewSummary: "Premium maintenance packages and fast emergency dispatch for CA residents.",
+    isSponsored: true,
+    website: "https://example.com/cal-pool",
+    specialOffer: "Save 15% on your first month of service!",
+    mapUri: "https://google.com",
+    targetStates: ["CA"] // Only shows if user selects California
+  }
 ];
 
 export const US_STATES = [

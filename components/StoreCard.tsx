@@ -1,6 +1,6 @@
 import React from 'react';
 import { StoreResult } from '../types';
-import { Phone, MapPin, Star, Trophy, Navigation } from 'lucide-react';
+import { Phone, MapPin, Star, Trophy, Navigation, ExternalLink, BadgePercent } from 'lucide-react';
 
 interface StoreCardProps {
   store: StoreResult;
@@ -11,13 +11,25 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
   const isPhoneAvailable = store.phone && store.phone !== "Not Available";
   
   // Logic to determine if this is a "Top Rated" store (4.8 stars or higher)
-  const isTopRated = isRatingAvailable && typeof store.rating === 'number' && store.rating >= 4.8;
+  const isTopRated = !store.isSponsored && isRatingAvailable && typeof store.rating === 'number' && store.rating >= 4.8;
 
   return (
     <div className={`
       bg-white rounded-xl shadow-lg transition-all duration-300 border overflow-hidden flex flex-col h-full group relative
-      ${isTopRated ? 'border-yellow-400 shadow-xl ring-1 ring-yellow-100' : 'border-brand-base2 hover:shadow-2xl'}
+      ${store.isSponsored 
+        ? 'border-indigo-500 ring-2 ring-indigo-100 shadow-xl' 
+        : isTopRated 
+          ? 'border-yellow-400 shadow-xl ring-1 ring-yellow-100' 
+          : 'border-brand-base2 hover:shadow-2xl'
+      }
     `}>
+      {/* Visual Indicator for Sponsored Stores */}
+      {store.isSponsored && (
+         <div className="absolute top-0 right-0 bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-bl-lg z-10 flex items-center shadow-sm">
+           Sponsored
+         </div>
+      )}
+
       {/* Visual Indicator for Top Rated Stores */}
       {isTopRated && (
         <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-950 text-xs font-bold px-3 py-1.5 rounded-bl-lg z-10 flex items-center shadow-sm border-b border-l border-white/20">
@@ -26,8 +38,8 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
       )}
 
       <div className="p-6 flex-grow">
-        <div className="flex justify-between items-start mb-2 pr-16"> {/* pr-16 ensures text doesn't overlap with badge */}
-          <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-accent1 transition-colors leading-tight">
+        <div className="flex justify-between items-start mb-2 pr-16">
+          <h3 className={`text-xl font-bold transition-colors leading-tight ${store.isSponsored ? 'text-indigo-900' : 'text-gray-900 group-hover:text-brand-accent1'}`}>
             {store.name}
           </h3>
         </div>
@@ -57,9 +69,17 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
           {store.address}
         </p>
 
-        <div className="bg-brand-base2/30 p-4 rounded-lg mb-4 border-l-4 border-brand-base1">
+        <div className={`p-4 rounded-lg mb-4 border-l-4 ${store.isSponsored ? 'bg-indigo-50 border-indigo-400' : 'bg-brand-base2/30 border-brand-base1'}`}>
           <p className="text-sm text-gray-700 italic leading-relaxed">"{store.reviewSummary}"</p>
         </div>
+
+        {/* Special Offer for Sponsored Cards */}
+        {store.isSponsored && store.specialOffer && (
+          <div className="flex items-center text-sm font-semibold text-green-700 bg-green-50 p-2 rounded mb-3 border border-green-200">
+             <BadgePercent size={18} className="mr-2" />
+             {store.specialOffer}
+          </div>
+        )}
 
         <div className="flex flex-col space-y-2 border-t border-gray-100 pt-3">
           {/* Phone */}
@@ -79,15 +99,30 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
         </div>
       </div>
       
-      <a 
-        href={store.mapUri} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="bg-brand-base1 hover:bg-cyan-400 text-brand-contrast1 font-bold py-3 px-6 text-center transition-colors flex items-center justify-center gap-2 uppercase tracking-wide text-sm"
-      >
-        <Navigation size={18} />
-        Get Directions
-      </a>
+      <div className="grid grid-cols-2 gap-px bg-gray-200">
+        <a 
+          href={store.mapUri} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={`bg-brand-base1 hover:bg-cyan-400 text-brand-contrast1 font-bold py-3 px-2 text-center transition-colors flex items-center justify-center gap-2 text-sm ${store.isSponsored ? 'col-span-1' : 'col-span-2'}`}
+        >
+          <Navigation size={16} />
+          Directions
+        </a>
+
+        {/* Extra Button for Sponsored: Visit Website */}
+        {store.isSponsored && (
+          <a 
+            href={store.website || '#'}
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-2 text-center transition-colors flex items-center justify-center gap-2 text-sm"
+          >
+            <ExternalLink size={16} />
+            Visit Site
+          </a>
+        )}
+      </div>
     </div>
   );
 };

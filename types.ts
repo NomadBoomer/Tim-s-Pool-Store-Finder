@@ -20,6 +20,11 @@ export interface StoreResult {
   rating?: number | string; // Can be a number or "Not Available"
   mapUri?: string; // From grounding
   coordinates?: { lat: number; lng: number }; // Inferred or from grounding
+  // Sponsored Fields
+  isSponsored?: boolean;
+  website?: string;
+  specialOffer?: string;
+  targetStates?: string[]; // If empty/undefined, shows globally. If populated, only shows in these states.
 }
 
 export interface ServiceOption {
