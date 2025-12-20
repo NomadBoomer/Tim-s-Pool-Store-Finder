@@ -79,7 +79,7 @@ export const searchPoolStores = async (
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-native-audio-preview-09-2025", // Using 2.5 series for Maps support
+      model: "gemini-2.5-flash", // Using standard 2.5 flash for reliable Maps grounding
       contents: prompt,
       config,
     });
